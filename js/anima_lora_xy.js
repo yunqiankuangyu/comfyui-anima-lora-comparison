@@ -117,7 +117,7 @@ app.registerExtension({
                 }
             }
 
-            const countIdx = this.widgets.findIndex((w) => w.name === "LoRA数量");
+            const countIdx = this.widgets.findIndex((w) => w.name === "权重");
 
             for (let i = 1; i <= count; i++) {
                 const name = `lora_${i}`;

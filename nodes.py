@@ -115,6 +115,16 @@ class AnimaLoraList:
     def INPUT_TYPES(s):
         return {
             "required": {
+                "权重": (
+                    "FLOAT",
+                    {
+                        "default": 1.0,
+                        "min": 0.0,
+                        "max": 10.0,
+                        "step": 0.01,
+                        "round": 0.001,
+                    },
+                ),
                 "LoRA数量": (
                     "INT",
                     {
@@ -127,16 +137,6 @@ class AnimaLoraList:
                 "lora_data": (
                     "STRING",
                     {"default": "", "multiline": False},
-                ),
-                "权重": (
-                    "FLOAT",
-                    {
-                        "default": 1.0,
-                        "min": 0.0,
-                        "max": 10.0,
-                        "step": 0.01,
-                        "round": 0.001,
-                    },
                 ),
             },
         }
