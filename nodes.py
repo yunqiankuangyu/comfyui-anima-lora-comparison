@@ -1,5 +1,5 @@
 """
-Anima LoRA XY — ComfyUI plugin for batch LoRA comparison on Anima/Cosmos models.
+Anima LoRA Comparison — ComfyUI plugin for batch LoRA comparison on Anima/Cosmos models.
 
 Nodes:
     AnimaModelLoader  — UNET + CLIP + VAE 集合加载器
@@ -10,7 +10,6 @@ Nodes:
 
 import json
 import torch
-import numpy as np
 import comfy.sd
 import comfy.sample
 import comfy.utils

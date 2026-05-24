@@ -30,13 +30,6 @@ app.registerExtension({
             if (!this.properties) this.properties = {};
             if (!this.properties.anima_selections) this.properties.anima_selections = {};
 
-            const dataW = this.widgets?.find((w) => w.name === "lora_data");
-            if (dataW) {
-                dataW.hidden = true;
-                dataW.computeSize = () => [0, -4];
-                dataW.type = "hidden";
-            }
-
             const self = this;
             requestAnimationFrame(() => self._animaInit());
         };
