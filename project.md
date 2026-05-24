@@ -1,0 +1,79 @@
+# ComfyUI Anima LoRA Comparison — 项目备忘
+
+## 项目概述
+ComfyUI 自定义节点插件，用于 Anima（Cosmos-based）模型的 LoRA 批量对比测试。
+GitHub: https://github.com/yunqiankuangyu/comfyui-anima-lora-comparison
+作者: blue-stonejw / yunqiankuangyu
+
+## 文件结构
+```
+comfyui-anima-lora-xy/（本地文件夹名，未改）
+├── __init__.py          # 导入 nodes.py 的映射 + WEB_DIRECTORY
+├── nodes.py             # 4 个节点的 Python 实现
+├── pyproject.toml       # 插件元数据（版本号在此）
+├── README.md            # GitHub 说明文档
+├── LICENSE              # MIT 许可证
+├── .gitignore
+├── image.png            # README 中的工作流截图
+└── js/
+    └── anima_lora_xy.js # AnimaLoraList 前端（动态 combo + 记忆功能）
+```
+
+## 四个节点
+
+### 1. Anima 模型加载器（AnimaModelLoader）
+- 功能：UNET + CLIP + VAE 一体化加载
+- 输入：UNET模型、权重精度、CLIP模型、CLIP类型、CLIP设备、VAE模型
+- 输出：模型、CLIP、VAE
+
+### 2. Anima LoRA 列表（AnimaLoraList）
+- 功能：LoRA 对比列表，JS 动态创建下拉槽位
+- 输入：权重（顶部）、LoRA数量、lora_data（隐藏字段）
+- 输出：LoRA列表
+- 特性：
+  - 最多 20 个 LoRA
+  - 记忆功能：用 LiteGraph properties 存储选择（不依赖 widgets_values）
+  - JS 动态创建/销毁 combo widget
+
+### 3. Anima XY 采样器（AnimaXYSampler）
+- 功能：遍历 LoRA 列表，每个 LoRA 生成一张图
+- 输入：模型、正向、反向、潜空间、VAE、种子、步数、CFG、采样器、调度器、降噪、LoRA列表（可选）
+- 输出：图像列表
+- 核心采样路径：comfy.sample.sample()（与原生 KSampler 一致）
+- VAE 解码兼容 5D tensor（视频模型需要）
+
+### 4. Anima 图像排版（AnimaImageGrid）
+- 功能：多图拼接
+- 输入：图像、方向（左右/上下）、间距、颜色
+- 输出：拼接后的单张图
+
+## 关键技术细节
+
+### LoRA 列表记忆功能
+- 存储方式：LiteGraph `properties`（不依赖 `widgets_values`）
+- 原因：动态 combo 干扰 `widgets_values` 索引顺序
+- JS 中 `lora_data` 隐藏字段作为备份兼容旧工作流
+- `strength` 和 `lora_data` 的 `serialize = false`
+
+### 采样器实现
+- 使用 `comfy.sample.sample()`（KSampler 同路径）
+- `fix_empty_latent_channels` 修复 latent 维度
+- VAE 解码后处理 5D → 4D reshape
+
+### 节点分类
+- CATEGORY = "Anima-lora-测试"
+
+## 版本历史
+- v0.1.0：初始版本（4 个节点 + 记忆功能）
+- v0.2.0：参数名中文化 + 权重移至顶部 + 清理冗余代码
+
+## AI 工作约定
+1. 读取 `.txt` 文件获取任务指令
+2. 完成可执行任务后清空 `.txt` 内容
+3. 不触及核心功能的前提下清理冗余代码
+4. 改代码前先自检，不破坏已有功能
+5. 所有节点界面文字使用中文
+6. 优先使用 ComfyUI 原生实现，不自己造轮子
+
+## 待办
+- 本地文件夹名还是 `comfyui-anima-lora-xy`，需手动重命名为 `comfyui-anima-lora-comparison`
