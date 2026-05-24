@@ -22,10 +22,6 @@ git clone https://github.com/yunqiankuangyu/comfyui-anima-lora-xy.git
 
 或通过 [ComfyUI Manager](https://github.com/ltdrdata/ComfyUI-Manager) 搜索 `Anima LoRA XY` 安装。
 
-## 依赖 / Dependencies
-
-- [ComfyUI](https://github.com/comfyanonymous/ComfyUI) ≥ 0.22.0
-
 ## 使用 / Usage
 
 ### 基本接线
