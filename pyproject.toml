@@ -1,5 +1,5 @@
 [project]
-name = "comfyui-anima-lora-xy"
+name = "comfyui-anima-lora-comparison"
 version = "0.1.0"
 description = "Batch LoRA comparison sampler for Anima/Cosmos models in ComfyUI"
 requires-python = ">=3.10"
@@ -7,4 +7,4 @@ license = "MIT"
 
 [tool.comfy]
 PublisherId = "anima"
-DisplayName = "Anima LoRA XY"
+DisplayName = "Anima LoRA Comparison"

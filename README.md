@@ -1,4 +1,4 @@
-# ComfyUI Anima LoRA XY
+# ComfyUI Anima LoRA Comparison
 
 批量 LoRA 对比测试插件，适用于 Anima（Cosmos-based）模型。
 
@@ -17,7 +17,7 @@ Batch LoRA comparison plugin for Anima (Cosmos-based) models in ComfyUI.
 
 ```bash
 cd ComfyUI/custom_nodes
-git clone https://github.com/yunqiankuangyu/comfyui-anima-lora-xy.git
+git clone https://github.com/yunqiankuangyu/comfyui-anima-lora-comparison.git
 ```
 
 或通过 [ComfyUI Manager](https://github.com/ltdrdata/ComfyUI-Manager) 搜索 `Anima LoRA XY` 安装。

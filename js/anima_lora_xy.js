@@ -15,7 +15,7 @@ async function getLoraList() {
 }
 
 app.registerExtension({
-    name: "anima.lora_xy",
+    name: "anima.lora_comparison",
 
     async init() {
         await getLoraList();
