@@ -26,18 +26,7 @@ git clone https://github.com/yunqiankuangyu/comfyui-anima-lora-xy.git
 
 ### 基本接线
 
-```
-[Anima 模型加载器] → 模型 / CLIP / VAE
-        ↓
-  CLIPTextEncode(正向) ─→ positive ─┐
-  CLIPTextEncode(反向) ─→ negative ─┤
-  EmptyLatentImage ───→ latent ─────┤
-  ModelSamplingAuraFlow ─→ 模型 ────┤
-                                     ↓
-  [Anima LoRA 列表] → LoRA列表 ──→ [Anima XY 采样器] → 图像列表
-                                                      ↓
-                                              [Anima 图像排版] → PreviewImage
-```
+![工作流示例](image.png)
 
 ### LoRA 列表示例
 
