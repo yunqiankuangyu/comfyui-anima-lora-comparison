@@ -64,7 +64,7 @@ app.registerExtension({
                 dataW.serialize = false;
             }
 
-            const strengthW = this.widgets?.find((w) => w.name === "strength");
+            const strengthW = this.widgets?.find((w) => w.name === "权重");
             if (strengthW) {
                 strengthW.serialize = false;
                 if (this.properties?.anima_strength !== undefined) {
@@ -72,7 +72,7 @@ app.registerExtension({
                 }
             }
 
-            const countW = this.widgets?.find((w) => w.name === "lora_count");
+            const countW = this.widgets?.find((w) => w.name === "LoRA数量");
             if (countW) {
                 const self = this;
                 const origCb = countW.callback;
@@ -98,7 +98,7 @@ app.registerExtension({
             this._animaRebuilding = true;
 
             const comboList = ["(none)", ...(_loraCache || [])];
-            const countW = this.widgets?.find((w) => w.name === "lora_count");
+            const countW = this.widgets?.find((w) => w.name === "LoRA数量");
             const count = countW
                 ? Math.min(Math.max(countW.value, 1), MAX_SLOTS)
                 : 2;
@@ -117,7 +117,7 @@ app.registerExtension({
                 }
             }
 
-            const countIdx = this.widgets.findIndex((w) => w.name === "lora_count");
+            const countIdx = this.widgets.findIndex((w) => w.name === "LoRA数量");
 
             for (let i = 1; i <= count; i++) {
                 const name = `lora_${i}`;
@@ -161,7 +161,7 @@ app.registerExtension({
             if (!this.properties) this.properties = {};
             this.properties.anima_selections = sels;
 
-            const strengthW = this.widgets?.find((w) => w.name === "strength");
+            const strengthW = this.widgets?.find((w) => w.name === "权重");
             if (strengthW) this.properties.anima_strength = strengthW.value;
 
             const dataW = this.widgets?.find((w) => w.name === "lora_data");
