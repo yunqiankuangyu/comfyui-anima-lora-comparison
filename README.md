@@ -17,10 +17,14 @@ Batch LoRA comparison plugin for Anima (Cosmos-based) models in ComfyUI.
 
 ```bash
 cd ComfyUI/custom_nodes
-git clone https://github.com/YOUR_USERNAME/comfyui-anima-lora-xy.git
+git clone https://github.com/yunqiankuangyu/comfyui-anima-lora-xy.git
 ```
 
 或通过 [ComfyUI Manager](https://github.com/ltdrdata/ComfyUI-Manager) 搜索 `Anima LoRA XY` 安装。
+
+## 依赖 / Dependencies
+
+- [ComfyUI](https://github.com/comfyanonymous/ComfyUI) ≥ 0.22.0
 
 ## 使用 / Usage
 
@@ -51,11 +55,6 @@ git clone https://github.com/YOUR_USERNAME/comfyui-anima-lora-xy.git
 - **方向**：左右排列 / 上下排列
 - **间距**：0-256 像素
 - **颜色**：黑色、白色、灰色、红色、绿色、蓝色
-
-## 要求 / Requirements
-
-- ComfyUI ≥ 0.22.0
-- Anima 模型文件（UNET、CLIP、VAE、LoRA）
 
 ## 许可证 / License
 
