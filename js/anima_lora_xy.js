@@ -3,7 +3,8 @@ import { app } from "../../scripts/app.js";
 const MAX_SLOTS = 20;
 let _loraCache = null;
 
-async function getLoraList() {
+async function getLoraList(forceRefresh = false) {
+    if (forceRefresh) _loraCache = null;
     if (_loraCache) return _loraCache;
     try {
         const resp = await fetch("/models/loras");
@@ -166,6 +167,12 @@ app.registerExtension({
 
             const dataW = this.widgets?.find((w) => w.name === "lora_data");
             if (dataW) dataW.value = JSON.stringify(sels);
+        };
+
+        // 按 R 刷新时 ComfyUI 调用此方法
+        nodeType.prototype.refreshComboInNode = async function (defs) {
+            await getLoraList(true); // 强制刷新缓存
+            this._animaRebuild();    // 用最新列表重建 combo
         };
     },
 });

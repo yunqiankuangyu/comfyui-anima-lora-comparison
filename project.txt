@@ -66,6 +66,7 @@ comfyui-anima-lora-xy/（本地文件夹名，未改）
 ## 版本历史
 - v0.1.0：初始版本（4 个节点 + 记忆功能）
 - v0.2.0：参数名中文化 + 权重移至顶部 + 清理冗余代码
+- v0.2.1：兼容新版 ComfyUI（fix_empty_latent_channels 签名变更）+ 采样进度条支持 + R 键刷新 LoRA 列表
 
 ## AI 工作约定
 1. 读取 .txt 文件获取任务指令
@@ -74,6 +75,3 @@ comfyui-anima-lora-xy/（本地文件夹名，未改）
 4. 改代码前先自检，不破坏已有功能
 5. 所有节点界面文字使用中文
 6. 优先使用 ComfyUI 原生实现，不自己造轮子
-
-## 待办
-- 本地文件夹名还是 comfyui-anima-lora-xy，需手动重命名为 comfyui-anima-lora-comparison

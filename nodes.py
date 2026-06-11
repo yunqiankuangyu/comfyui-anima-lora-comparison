@@ -16,6 +16,7 @@ import comfy.utils
 import comfy.samplers
 import comfy.model_management
 import folder_paths
+import latent_preview
 
 
 # ─────────────────────────────────────────────
@@ -259,10 +260,12 @@ class AnimaXYSampler:
         latent_samples = comfy.sample.fix_empty_latent_channels(
             模型, latent_samples,
             latent.get("downscale_ratio_spacial", None),
-            latent.get("downscale_ratio_temporal", None),
         )
         latent["samples"] = latent_samples
         noise_mask = latent.get("noise_mask", None)
+
+        callback = latent_preview.prepare_callback(模型, 步数)
+        disable_pbar = not comfy.utils.PROGRESS_BAR_ENABLED
 
         images = []
 
@@ -294,6 +297,8 @@ class AnimaXYSampler:
                 正向, 反向, latent_samples,
                 denoise=降噪,
                 noise_mask=noise_mask,
+                callback=callback,
+                disable_pbar=disable_pbar,
                 seed=种子,
             )
             samples_out = samples_out.to(
