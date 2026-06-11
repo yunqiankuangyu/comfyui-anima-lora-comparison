@@ -264,12 +264,12 @@ class AnimaXYSampler:
         latent["samples"] = latent_samples
         noise_mask = latent.get("noise_mask", None)
 
-        callback = latent_preview.prepare_callback(模型, 步数)
         disable_pbar = not comfy.utils.PROGRESS_BAR_ENABLED
 
         images = []
 
         for idx, item in enumerate(LoRA列表):
+            callback = latent_preview.prepare_callback(模型, 步数)
             lora_name = item[0] if item else ""
             strength = item[1] if len(item) > 1 else 0
 
