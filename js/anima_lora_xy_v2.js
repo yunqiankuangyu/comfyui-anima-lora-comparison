@@ -60,8 +60,9 @@ app.registerExtension({
                 this.properties.anima_strength = data.properties.anima_strength;
             }
 
+            // Delay init to let ComfyUI restore widget values first
             var self = this;
-            requestAnimationFrame(() => self._animaInit());
+            setTimeout(() => self._animaInit(), 50);
         };
 
         // ---- sync: read all combos → write lora_data + properties ----
@@ -122,7 +123,24 @@ app.registerExtension({
                 };
             }
 
-            this._animaRebuild(true);  // fromLoad=true: use properties.anima_selections
+            this._animaRebuild(false);
+
+            // Fallback: if live widgets are empty after rebuild, force-write from saved properties
+            var saved = this.properties?.anima_selections;
+            if (saved && Object.keys(saved).length > 0) {
+                var _hasData = false;
+                for (var i = 1; i <= 20; i++) {
+                    var w = this.widgets?.find((x) => x.name === "lora_" + i);
+                    if (w && w.value && w.value !== "(none)") { _hasData = true; break; }
+                }
+                if (!_hasData) {
+                    for (var i = 1; i <= 20; i++) {
+                        var w = this.widgets?.find((x) => x.name === "lora_" + i);
+                        if (w && saved["lora_" + i]) w.value = saved["lora_" + i];
+                    }
+                    this._animaSync();
+                }
+            }
         };
 
         // ---- rebuild ----
