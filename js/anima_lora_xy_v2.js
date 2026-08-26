@@ -122,7 +122,7 @@ app.registerExtension({
                 };
             }
 
-            this._animaRebuild(false);
+            this._animaRebuild(true);  // fromLoad=true: use properties.anima_selections
         };
 
         // ---- rebuild ----
