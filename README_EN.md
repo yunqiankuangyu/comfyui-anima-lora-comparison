@@ -1,4 +1,4 @@
-<h1>ComfyUI Anima LoRA Comparison <a href="README.md"><sub>中文</sub></a></h1>
+<table><tr><td><h1>ComfyUI Anima LoRA Comparison</h1></td><td align="right" valign="middle"><a href="README.md">中文</a></td></tr></table>
 
 Batch LoRA comparison plugin for Anima (Cosmos-based) models in ComfyUI.
 

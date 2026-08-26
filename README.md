@@ -1,4 +1,4 @@
-<h1>ComfyUI Anima LoRA Comparison <a href="README_EN.md"><sub>English</sub></a></h1>
+<table><tr><td><h1>ComfyUI Anima LoRA Comparison</h1></td><td align="right" valign="middle"><a href="README_EN.md">English</a></td></tr></table>
 
 Anima（Cosmos 系列）模型的批量 LoRA 对比插件。
 
