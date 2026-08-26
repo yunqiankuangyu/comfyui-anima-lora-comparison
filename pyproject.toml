@@ -1,0 +1,13 @@
+[project]
+name = "comfyui-anima-lora-comparison"
+version = "0.0.5"
+description = "Batch LoRA comparison sampler for Anima/Cosmos models in ComfyUI"
+requires-python = ">=3.10"
+license = "MIT"
+
+[project.urls]
+Repository = "https://github.com/yunqiankuangyu/comfyui-anima-lora-comparison"
+
+[tool.comfy]
+PublisherId = "yunqiankuangyu"
+DisplayName = "Anima LoRA Comparison"

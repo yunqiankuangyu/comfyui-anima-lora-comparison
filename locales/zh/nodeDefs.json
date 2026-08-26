@@ -1,0 +1,45 @@
+{
+  "AnimaModelLoader": {
+    "display_name": "Anima 模型加载器",
+    "inputs": {
+      "UNET Model": { "name": "UNET模型" },
+      "Weight Precision": { "name": "权重精度" },
+      "CLIP Model": { "name": "CLIP模型" },
+      "CLIP Type": { "name": "CLIP类型" },
+      "CLIP Device": { "name": "CLIP设备" },
+      "VAE Model": { "name": "VAE模型" }
+    }
+  },
+  "AnimaLoraList": {
+    "display_name": "Anima LoRA 列表",
+    "inputs": {
+      "Strength": { "name": "权重" },
+      "LoRA Count": { "name": "LoRA数量" }
+    }
+  },
+  "AnimaXYSampler": {
+    "display_name": "Anima XY 采样器",
+    "inputs": {
+      "MODEL": { "name": "模型" },
+      "Positive": { "name": "正向" },
+      "Negative": { "name": "反向" },
+      "Latent": { "name": "潜空间" },
+      "Seed": { "name": "种子" },
+      "Steps": { "name": "步数" },
+      "CFG": { "name": "CFG" },
+      "Sampler": { "name": "采样器" },
+      "Scheduler": { "name": "调度器" },
+      "Denoise": { "name": "降噪" },
+      "LoRA List": { "name": "LoRA列表" }
+    }
+  },
+  "AnimaImageGrid": {
+    "display_name": "Anima 图像排版",
+    "inputs": {
+      "Image": { "name": "图像" },
+      "Direction": { "name": "方向" },
+      "Gap": { "name": "间距" },
+      "Color": { "name": "颜色" }
+    }
+  }
+}

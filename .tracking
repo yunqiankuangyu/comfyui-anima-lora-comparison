@@ -1,0 +1,10 @@
+.gitignore
+LICENSE
+README.md
+__init__.py
+image.png
+js/anima_lora_xy.js
+locales/zh/nodeDefs.json
+nodes.py
+project.txt
+pyproject.toml
