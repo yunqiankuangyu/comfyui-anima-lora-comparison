@@ -24,7 +24,6 @@ app.registerExtension({
 
     async beforeRegisterNodeDef(nodeType, nodeData) {
         if (nodeData.name !== "AnimaLoraList") return;
-
         // ---- lifecycle hooks ----
         const origOnNodeCreated = nodeType.prototype.onNodeCreated;
         nodeType.prototype.onNodeCreated = function () {
@@ -48,6 +47,30 @@ app.registerExtension({
             }
             var self = this;
             requestAnimationFrame(() => self._animaInit());
+        };
+
+        // ---- sync: read all combos → write lora_data + properties ----
+        nodeType.prototype._animaSync = function () {
+            var countW = this.widgets?.find((w) => w.name === "LoRA Count");
+            var count = countW
+                ? Math.min(Math.max(countW.value, 1), MAX_SLOTS)
+                : 1;
+
+            var sels = {};
+            for (var i = 1; i <= count; i++) {
+                var w = this.widgets?.find((x) => x.name === "lora_" + i);
+                if (w && w.value && w.value !== "(none)") {
+                    sels["lora_" + i] = w.value;
+                }
+            }
+            this.properties.anima_selections = sels;
+
+            var dataW = this.widgets?.find((w) => w.name === "lora_data");
+            if (dataW) dataW.value = JSON.stringify(sels);
+
+            var strengthW = this.widgets?.find((w) => w.name === "Strength");
+            if (strengthW)
+                this.properties.anima_strength = strengthW.value;
         };
 
         // ---- init ----
@@ -185,19 +208,8 @@ app.registerExtension({
                 if (w) w.value = ordered[i - 1];
             }
 
-            // Persist to properties
-            var sels = {};
-            for (var i = 0; i < count; i++) {
-                if (ordered[i] !== "(none)") sels["lora_" + (i + 1)] = ordered[i];
-            }
-            this.properties.anima_selections = sels;
-
-            var dataW = this.widgets?.find((w) => w.name === "lora_data");
-            if (dataW) dataW.value = JSON.stringify(sels);
-
-            var strengthW = this.widgets?.find((w) => w.name === "Strength");
-            if (strengthW)
-                this.properties.anima_strength = strengthW.value;
+            // Sync to lora_data + properties
+            this._animaSync();
 
             var sz = this.computeSize();
             this.size[0] = Math.max(this.size[0], sz[0]);
