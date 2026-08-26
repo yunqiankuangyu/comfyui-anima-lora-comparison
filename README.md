@@ -1,64 +1,62 @@
 # ComfyUI Anima LoRA Comparison
 
-Batch LoRA comparison plugin for Anima (Cosmos-based) models in ComfyUI.
+[English](README_EN.md)
 
-## Nodes
+Anima（Cosmos 系列）模型的批量 LoRA 对比插件。
 
-| Node | Description |
-|------|-------------|
-| **Anima Model Loader** | UNET + CLIP + VAE all-in-one loader |
-| **Anima LoRA List** | Select LoRA from dropdown, unified strength, up to 20. Supports Apply Mode (Standard / Anima 3.8B Bridge) |
-| **Anima XY Sampler** | Iterate LoRA list, generate one image per LoRA |
-| **Anima Image Grid** | Multi-image layout, horizontal/vertical, adjustable gap and color |
+## 节点
 
-## Installation
+| 节点 | 说明 |
+|------|------|
+| **Anima Model Loader** | UNET + CLIP + VAE 一体化加载器 |
+| **Anima LoRA List** | 下拉选择 LoRA，统一强度，最多 20 个。支持 Apply Mode（Standard / Anima 3.8B Bridge） |
+| **Anima XY Sampler** | 遍历 LoRA 列表，每个 LoRA 生成一张图 |
+| **Anima Image Grid** | 多图拼接，水平/垂直，可调间距和颜色 |
+
+## 安装
 
 ```bash
 cd ComfyUI/custom_nodes
 git clone https://github.com/yunqiankuangyu/comfyui-anima-lora-comparison.git
 ```
 
-Or install via [ComfyUI Manager](https://github.com/ltdrdata/ComfyUI-Manager) — search for `Anima LoRA XY`.
+或通过 [ComfyUI Manager](https://github.com/ltdrdata/ComfyUI-Manager) 安装——搜索 `Anima LoRA XY`。
 
-## Usage
+## 使用方法
 
-### Basic Wiring
+### 基本接线
 
-![Workflow Example](image.png)
+![工作流示例](image.png)
 
-### LoRA List
+### LoRA List 节点
 
-In the Anima LoRA List node:
-- `LoRA Count`: number of LoRAs to compare (1-20)
-- `lora_1` ~ `lora_N`: select LoRA files from dropdown
-- `Strength`: unified strength for all LoRAs
-- `Apply Mode`: choose between Standard and Anima 3.8B Bridge (see below)
+- `LoRA Count`：要对比的 LoRA 数量（1-20）
+- `lora_1` ~ `lora_N`：下拉选择 LoRA 文件
+- `Strength`：所有 LoRA 统一强度
+- `Apply Mode`：选择 Standard 或 Anima 3.8B Bridge（见下文）
 
-### Anima 3.8B Bridge Mode
+### Anima 3.8B Bridge 模式
 
-This plugin supports联动 with [comfyui-anima-3-8b-lora-bridge](https://github.com/user/comfyui-anima-3-8b-lora-bridge) to run **2B-trained LoRAs on the 3.8B (52-block) UNET**.
+本插件支持与 [comfyui-anima-3-8b-lora-bridge](https://github.com/user/comfyui-anima-3-8b-lora-bridge) 联动，**让不同 Anima 模型变体训练的 LoRA 在其他变体上运行**。
 
-**When to use Bridge mode:**
-- Your LoRA was trained on Anima 2B (the smaller model)
-- You want to run it on Anima 3.8B (the larger 52-block model)
-- Bridge mode remaps the LoRA layers to match the 3.8B architecture
+**何时使用 Bridge 模式：**
+- 你的 LoRA 训练时用的模型与当前加载的模型不是同一个变体
+- Bridge 模式会自动重映射 LoRA 层以匹配当前加载模型的架构
 
-**When to use Standard mode:**
-- Your LoRA was natively trained on Anima 3.8B
-- You're using LoRA that already targets the 52-block architecture
-- Standard mode applies LoRA without remapping
+**何时使用 Standard 模式：**
+- 你的 LoRA 与当前加载的模型架构一致（无需重映射）
 
-**Requirements for Bridge mode:**
-1. Install [comfyui-anima-3-8b-lora-bridge](https://github.com/user/comfyui-anima-3-8b-lora-bridge) in `custom_nodes/`
-2. Load a 3.8B UNET (52 blocks) in the Anima Model Loader
-3. Select "Anima 3.8B Bridge" in the Apply Mode dropdown
+**Bridge 模式使用条件：**
+1. 安装 [comfyui-anima-3-8b-lora-bridge](https://github.com/user/comfyui-anima-3-8b-lora-bridge) 到 `custom_nodes/`
+2. 在 Anima Model Loader 中加载目标模型
+3. 在 Apply Mode 下拉菜单中选择 "Anima 3.8B Bridge"
 
-### Image Grid
+### Image Grid 节点
 
-- **Direction**: Horizontal / Vertical
-- **Gap**: 0-256 pixels
-- **Color**: Black, White, Gray, Red, Green, Blue
+- **Direction**：水平 / 垂直
+- **Gap**：0-256 像素
+- **Color**：Black, White, Gray, Red, Green, Blue
 
-## License
+## 开源协议
 
 MIT
