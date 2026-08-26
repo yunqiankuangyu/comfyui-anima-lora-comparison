@@ -18,7 +18,7 @@ cd ComfyUI/custom_nodes
 git clone https://github.com/yunqiankuangyu/comfyui-anima-lora-comparison.git
 ```
 
-或通过 [ComfyUI Manager](https://github.com/ltdrdata/ComfyUI-Manager) 安装——搜索 `Anima LoRA XY`。
+或通过 [ComfyUI Manager](https://github.com/ltdrdata/ComfyUI-Manager) 安装——搜索 `comfyui-anima-lora-comparison`。
 
 ## 使用方法
 
