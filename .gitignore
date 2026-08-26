@@ -10,4 +10,4 @@ Thumbs.db
 .idea/
 .env
 *.log
-.txt
+project.txt
