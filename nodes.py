@@ -75,7 +75,14 @@ class AnimaModelLoader:
     FUNCTION = "load"
     CATEGORY = "Anima/LoRA Comparison"
 
-    def load(self, UNET_Model, Weight_Precision, CLIP_Model, CLIP_Type, CLIP_Device, VAE_Model):
+    def load(self, **kwargs):
+        # ComfyUI 0.33+ passes INPUT_TYPES keys as-is (spaces, not underscores)
+        UNET_Model = kwargs.get("UNET Model", kwargs.get("UNET_Model"))
+        Weight_Precision = kwargs.get("Weight Precision", kwargs.get("Weight_Precision"))
+        CLIP_Model = kwargs.get("CLIP Model", kwargs.get("CLIP_Model"))
+        CLIP_Type = kwargs.get("CLIP Type", kwargs.get("CLIP_Type"))
+        CLIP_Device = kwargs.get("CLIP Device", kwargs.get("CLIP_Device"))
+        VAE_Model = kwargs.get("VAE Model", kwargs.get("VAE_Model"))
         model_options = {}
         if Weight_Precision == "fp8_e4m3fn":
             model_options["dtype"] = torch.float8_e4m3fn
