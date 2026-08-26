@@ -37,14 +37,29 @@ app.registerExtension({
         const origOnConfigure = nodeType.prototype.onConfigure;
         nodeType.prototype.onConfigure = function (data) {
             origOnConfigure?.apply(this, arguments);
-            if (data.properties?.anima_selections) {
+
+            // Restore selections from lora_data widget value (primary source)
+            var dataW = this.widgets?.find((w) => w.name === "lora_data");
+            if (dataW?.value) {
+                try {
+                    var parsed = JSON.parse(dataW.value);
+                    if (Object.keys(parsed).length > 0) {
+                        this.properties.anima_selections = parsed;
+                    }
+                } catch {}
+            }
+
+            // Fallback: also try from saved properties (backwards compat)
+            if (!Object.keys(this.properties.anima_selections || {}).length && data.properties?.anima_selections) {
                 this.properties.anima_selections = JSON.parse(
                     JSON.stringify(data.properties.anima_selections)
                 );
             }
+
             if (data.properties?.anima_strength !== undefined) {
                 this.properties.anima_strength = data.properties.anima_strength;
             }
+
             var self = this;
             requestAnimationFrame(() => self._animaInit());
         };
@@ -83,10 +98,9 @@ app.registerExtension({
 
             var dataW = this.widgets?.find((w) => w.name === "lora_data");
             if (dataW) {
+                // Hide visually but KEEP serialize=true so the value persists in workflow
                 dataW.hidden = true;
                 dataW.computeSize = () => [0, -4];
-                dataW.type = "hidden";
-                dataW.serialize = false;
             }
 
             var strengthW = this.widgets?.find((w) => w.name === "Strength");
@@ -104,16 +118,8 @@ app.registerExtension({
                 countW.callback = function (v) {
                     origCb?.call(this, v);
                     self._animaRebuild(false);
+                    self._animaSync();
                 };
-            }
-
-            if (dataW?.value) {
-                try {
-                    var parsed = JSON.parse(dataW.value);
-                    if (Object.keys(parsed).length > 0) {
-                        this.properties.anima_selections = parsed;
-                    }
-                } catch {}
             }
 
             this._animaRebuild(false);
@@ -207,9 +213,6 @@ app.registerExtension({
                 });
                 if (w) w.value = ordered[i - 1];
             }
-
-            // Sync to lora_data + properties
-            this._animaSync();
 
             var sz = this.computeSize();
             this.size[0] = Math.max(this.size[0], sz[0]);
