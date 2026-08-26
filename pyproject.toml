@@ -11,3 +11,4 @@ Repository = "https://github.com/yunqiankuangyu/comfyui-anima-lora-comparison"
 [tool.comfy]
 PublisherId = "yunqiankuangyu"
 DisplayName = "Anima LoRA Comparison"
+
