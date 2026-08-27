@@ -11,6 +11,7 @@ Nodes:
 import json
 import os
 import sys
+import glob
 import torch
 import comfy.sd
 import comfy.sample
@@ -19,6 +20,8 @@ import comfy.samplers
 import comfy.model_management
 import folder_paths
 import latent_preview
+import numpy as np
+from PIL import Image, ImageDraw, ImageFont
 
 
 # ─────────────────────────────────────────────
@@ -257,8 +260,8 @@ class AnimaXYSampler:
             },
         }
 
-    RETURN_TYPES = ("IMAGE",)
-    RETURN_NAMES = ("IMAGE",)
+    RETURN_TYPES = ("IMAGE", "LORA_NAMES")
+    RETURN_NAMES = ("IMAGE", "LORA_NAMES")
     FUNCTION = "sample"
     CATEGORY = "Anima/LoRA Comparison"
 
@@ -286,11 +289,14 @@ class AnimaXYSampler:
         # Apply Mode is carried inside the LORA_LIST as a ("__apply_mode__", mode) item
         Apply_Mode = "Standard"
         clean_list = []
+        lora_names = []  # Extract LoRA names for passing to ImageGrid
         for it in LoRA_List:
             if it and it[0] == "__apply_mode__":
                 Apply_Mode = it[1]
             else:
                 clean_list.append(it)
+                if it and it[0] and it[0] != "":
+                    lora_names.append(it[0])
         LoRA_List = clean_list
 
         bridge_remap = None
@@ -379,11 +385,147 @@ class AnimaXYSampler:
             images.append(decoded)
 
         output = torch.cat(images, dim=0)
-        return (output,)
+        lora_names_str = "\n".join(lora_names) if lora_names else ""
+        return (output, lora_names_str)
 
 
 # ─────────────────────────────────────────────
-#  AnimaImageGrid
+#  Image Annotation Utilities
+# ─────────────────────────────────────────────
+
+def _tensor_to_pil(image_tensor):
+    """Convert ComfyUI IMAGE tensor (BHWC) to PIL Image."""
+    if isinstance(image_tensor, torch.Tensor):
+        if image_tensor.ndim == 4:  # Batch dimension
+            image_tensor = image_tensor[0]
+        arr = image_tensor.detach().cpu().float().numpy()
+        # ComfyUI IMAGE is BHWC. If this looks like BCHW (channels on dim0), permute.
+        if arr.ndim == 3 and arr.shape[0] in (1, 3, 4) and arr.shape[2] > 4:
+            arr = arr.transpose(1, 2, 0)  # BCHW -> HWC
+        arr = (arr * 255.0).clip(0, 255).astype(np.uint8)
+        if arr.ndim == 2:
+            return Image.fromarray(arr, "L").convert("RGB")
+        if arr.shape[2] == 4:
+            return Image.fromarray(arr, "RGBA").convert("RGB")
+        return Image.fromarray(arr, "RGB")
+    return image_tensor
+
+
+_MODEL_EXTS = {".safetensors", ".ckpt", ".pt", ".pth", ".bin", ".sft"}
+
+
+def _strip_model_ext(name):
+    """Strip directory prefix (keep only the basename) and trailing model extensions
+    like .safetensors / .ckpt. Handles both `foo.safetensors` and nested
+    `anima\\YKS\\foo.safetensors` -> `foo`."""
+    name = name.strip()
+    # keep only the last path segment (strip nested folder prefixes)
+    for sep in ("/", "\\"):
+        if sep in name:
+            name = name.rsplit(sep, 1)[-1]
+    changed = True
+    while changed:
+        changed = False
+        low = name.lower()
+        for ext in _MODEL_EXTS:
+            if low.endswith(ext):
+                name = name[: -len(ext)]
+                changed = True
+                break
+    return name
+
+
+def _pil_to_tensor(image_pil):
+    """Convert PIL Image to ComfyUI IMAGE tensor (BHWC)."""
+    image_np = np.array(image_pil).astype(np.float32) / 255.0
+    # ComfyUI IMAGE is BHWC — keep HWC order, just add batch dim
+    image_tensor = torch.from_numpy(image_np)  # (H, W, C)
+    return image_tensor.unsqueeze(0)  # (1, H, W, C)
+
+
+def _make_label_font(font_size):
+    """Return a PIL font covering CJK + Latin. Probes system CJK fonts first
+    (Windows YaHei/SimHei, macOS PingFang, Linux Noto CJK / wqy), then arial,
+    then PIL default. Cached per font_size."""
+    if font_size in _LABEL_FONT_CACHE:
+        return _LABEL_FONT_CACHE[font_size]
+    font = None
+    for path, idx in _LABEL_FONT_CANDIDATES:
+        try:
+            font = (ImageFont.truetype(path, font_size, index=idx)
+                    if idx is not None else ImageFont.truetype(path, font_size))
+            break
+        except Exception:
+            continue
+    if font is None:
+        try:
+            font = ImageFont.truetype("arial.ttf", font_size)
+        except Exception:
+            try:
+                font = ImageFont.load_default()
+            except Exception:
+                font = None
+    _LABEL_FONT_CACHE[font_size] = font
+    return font
+
+
+_LABEL_FONT_CACHE = {}
+
+
+def _label_font_candidates():
+    cands = []
+    wf = "C:/Windows/Fonts"
+    if os.path.isdir(wf):
+        cands += [
+            (os.path.join(wf, "msyh.ttc"), 0),
+            (os.path.join(wf, "simhei.ttf"), None),
+            (os.path.join(wf, "simsun.ttc"), 0),
+            (os.path.join(wf, "NotoSansSC-VF.ttf"), None),
+        ]
+    for p in ("/System/Library/Fonts/PingFang.ttc",
+              "/System/Library/Fonts/STHeiti Light.ttc",
+              "/Library/Fonts/Arial Unicode.ttf"):
+        if os.path.exists(p):
+            cands.append((p, 0))
+    for pat in ("/usr/share/fonts/**/NotoSansCJK*.ttc",
+                "/usr/share/fonts/**/wqy-zenhei.ttc",
+                "/usr/share/fonts/**/wqy-microhei.ttc",
+                "/usr/share/fonts/**/NotoSansSC*.ttf"):
+        hit = glob.glob(pat, recursive=True)
+        if hit:
+            cands.append((hit[0], None))
+    return cands
+
+
+_LABEL_FONT_CANDIDATES = _label_font_candidates()
+
+
+def _render_label_bar(text, width, font_size=24, color=(255, 255, 255),
+                      bg_color=(0, 0, 0)):
+    """Render a standalone label strip (RGBA, width × strip_h) placed below an image.
+    bg_color may be (R,G,B) for a solid band or (R,G,B,A) with A=0 for transparent."""
+    margin = max(font_size // 4, 4)
+    font = _make_label_font(font_size)
+
+    # Measure ink height on a tiny canvas to size the strip first.
+    meas = ImageDraw.Draw(Image.new("RGBA", (1, 1))).textbbox((0, 0), text, font=font)
+    th = (meas[3] - meas[1]) if meas else font_size
+    strip_h = th + 2 * margin
+
+    bar = Image.new("RGBA", (max(int(width), 1), strip_h), bg_color)
+    bd = ImageDraw.Draw(bar)
+    cx = int(width) // 2
+    # Default anchor is top-left; textbbox gives the ink box relative to (0,0).
+    # Place the ink's top-left so the ink block is centered in the strip.
+    ink = bd.textbbox((0, 0), text, font=font)
+    ink_h = ink[3] - ink[1]
+    top = (strip_h - ink_h) // 2 - ink[1]
+    left = cx - (ink[2] - ink[0]) // 2 - ink[0]
+    bd.text((left, top), text, fill=color, font=font)
+    return bar
+
+# ─────────────────────────────────────────────
+#  AnimaImageGrid (Enhanced with text labels)
 # ─────────────────────────────────────────────
 
 class AnimaImageGrid:
@@ -405,10 +547,21 @@ class AnimaImageGrid:
                     "INT",
                     {"default": 0, "min": 0, "max": 256, "step": 1},
                 ),
-                "Color": (
-                    ["Black", "White", "Gray", "Red", "Green", "Blue"],
+                "Show Labels": (
+                    ["True", "False"],
+                    {"default": "True"},
+                ),
+                "Label Color": (
+                    ["White", "Black", "Yellow", "Cyan", "Magenta", "Red", "Green", "Blue"],
                     {"default": "Black"},
                 ),
+                "Label Background": (
+                    ["Black", "White", "Gray", "Red", "Green", "Blue", "Transparent"],
+                    {"default": "White"},
+                ),
+            },
+            "optional": {
+                "LoRA Names": ("LORA_NAMES", {"tooltip": "Auto-filled from Anima XY Sampler — LoRA names in image order"}),
             },
         }
 
@@ -417,50 +570,91 @@ class AnimaImageGrid:
     FUNCTION = "grid"
     CATEGORY = "Anima/LoRA Comparison"
 
-    COLOR_MAP = {
+    LABEL_COLOR_MAP = {
+        "White": (255, 255, 255),
+        "Black": (0, 0, 0),
+        "Yellow": (255, 255, 0),
+        "Cyan": (0, 255, 255),
+        "Magenta": (255, 0, 255),
+        "Red": (255, 0, 0),
+        "Green": (0, 255, 0),
+        "Blue": (0, 0, 255),
+    }
+    
+    LABEL_BG_MAP = {
         "Black": (0, 0, 0),
         "White": (255, 255, 255),
         "Gray": (128, 128, 128),
         "Red": (255, 0, 0),
         "Green": (0, 255, 0),
         "Blue": (0, 0, 255),
+        "Transparent": (0, 0, 0, 0),  # Will be handled specially
     }
 
-    def grid(self, Image, Direction, Gap, Color):
-        n = Image.shape[0]
-        if n == 1:
-            return (Image,)
+    def grid(self, **kwargs):
+        img_tensor = kwargs["Image"]
+        Direction = kwargs.get("Direction", "Horizontal")
+        Gap = int(kwargs.get("Gap", 0))
+        Show_Labels = kwargs.get("Show Labels", kwargs.get("Show_Labels", "True"))
+        Label_Color = kwargs.get("Label Color", kwargs.get("Label_Color", "White"))
+        Label_Background = kwargs.get("Label Background", kwargs.get("Label_Background", "Black"))
+        LoRA_Names = kwargs.get("LoRA Names", kwargs.get("LoRA_Names"))
+        n = img_tensor.shape[0]
+        # Gap area is transparent (alpha = 0); labels keep their own background.
 
-        r, g, b = self.COLOR_MAP.get(Color, (0, 0, 0))
-        img_list = [Image[i] for i in range(n)]
+        # Parse lora names (with extension stripped)
+        lora_names = []
+        if LoRA_Names:
+            lora_names = [_strip_model_ext(name) for name in LoRA_Names.strip().split('\n') if name.strip()]
 
+        show_labels = (Show_Labels == "True") and bool(lora_names)
+        label_font_pct = 10.0  # fixed: font size = 10% of image width
+
+        # Build per-image units: [image | label bar below], no occlusion
+        unit_list = []
+        for i in range(n):
+            img_pil = _tensor_to_pil(img_tensor[i])
+            if show_labels:
+                label_text = lora_names[i] if i < len(lora_names) else f"Image {i+1}"
+                bar = _render_label_bar(
+                    label_text,
+                    width=img_pil.width,
+                    font_size=max(8, int(round(img_pil.width * label_font_pct / 100.0))),
+                    color=self.LABEL_COLOR_MAP.get(Label_Color, (255, 255, 255)),
+                    bg_color=self.LABEL_BG_MAP.get(Label_Background, (0, 0, 0)),
+                )
+                # unit is RGBA so the gap above can stay transparent
+                unit = Image.new("RGBA", (img_pil.width, img_pil.height + bar.height), (0, 0, 0, 0))
+                unit.paste(img_pil.convert("RGBA"), (0, 0))
+                unit.paste(bar, (0, img_pil.height))
+            else:
+                unit = img_pil.convert("RGBA")
+            unit_list.append(_pil_to_tensor(unit).squeeze(0))
+
+        # Create grid from units
         if Direction == "Horizontal":
-            max_h = max(img.shape[0] for img in img_list)
-            total_w = sum(img.shape[1] for img in img_list) + Gap * (n - 1)
-            canvas = torch.zeros(max_h, total_w, 3, dtype=Image.dtype, device=Image.device)
-            canvas[:, :, 0] = r / 255.0
-            canvas[:, :, 1] = g / 255.0
-            canvas[:, :, 2] = b / 255.0
+            max_h = max(u.shape[0] for u in unit_list)
+            total_w = sum(u.shape[1] for u in unit_list) + Gap * (n - 1)
+            canvas = torch.zeros(max_h, total_w, 4, dtype=img_tensor.dtype, device=img_tensor.device)
+            # alpha defaults to 0 (transparent) — gap areas show through
 
             x = 0
-            for img in img_list:
-                h, w = img.shape[0], img.shape[1]
+            for u in unit_list:
+                h, w = u.shape[0], u.shape[1]
                 y_off = (max_h - h) // 2
-                canvas[y_off:y_off+h, x:x+w, :] = img
+                canvas[y_off:y_off+h, x:x+w, :] = u
                 x += w + Gap
         else:
-            max_w = max(img.shape[1] for img in img_list)
-            total_h = sum(img.shape[0] for img in img_list) + Gap * (n - 1)
-            canvas = torch.zeros(total_h, max_w, 3, dtype=Image.dtype, device=Image.device)
-            canvas[:, :, 0] = r / 255.0
-            canvas[:, :, 1] = g / 255.0
-            canvas[:, :, 2] = b / 255.0
+            max_w = max(u.shape[1] for u in unit_list)
+            total_h = sum(u.shape[0] for u in unit_list) + Gap * (n - 1)
+            canvas = torch.zeros(total_h, max_w, 4, dtype=img_tensor.dtype, device=img_tensor.device)
+            # alpha defaults to 0 (transparent) — gap areas show through
 
             y = 0
-            for img in img_list:
-                h, w = img.shape[0], img.shape[1]
+            for u in unit_list:
+                h, w = u.shape[0], u.shape[1]
                 x_off = (max_w - w) // 2
-                canvas[y:y+h, x_off:x_off+w, :] = img
+                canvas[y:y+h, x_off:x_off+w, :] = u
                 y += h + Gap
 
         return (canvas.unsqueeze(0),)
@@ -481,5 +675,5 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "AnimaModelLoader": "Anima Model Loader",
     "AnimaLoraList": "Anima LoRA List",
     "AnimaXYSampler": "Anima XY Sampler",
-    "AnimaImageGrid": "Anima Image Grid",
+    "AnimaImageGrid": "Anima Image Grid (with Labels)",
 }
