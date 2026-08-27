@@ -9,7 +9,7 @@ Batch LoRA comparison plugin for Anima (Cosmos-based) models in ComfyUI.
 | **Anima Model Loader** | UNET + CLIP + VAE all-in-one loader |
 | **Anima LoRA List** | Select LoRA from dropdown, unified strength, up to 20. Supports Apply Mode (Standard / Anima 3.8B Bridge) |
 | **Anima XY Sampler** | Iterate LoRA list, generate one image per LoRA |
-| **Anima Image Grid** | Multi-image layout, horizontal/vertical, adjustable gap and color |
+| **Anima Image Grid** | Multi-image layout, horizontal/vertical, adjustable gap and color. **New: image text labels supported** |
 
 ## Installation
 
@@ -55,6 +55,30 @@ This plugin supports integration with [comfyui-anima-3-8b-lora-bridge](https://g
 - **Direction**: Horizontal / Vertical
 - **Gap**: 0-256 pixels
 - **Color**: Black, White, Gray, Red, Green, Blue
+- **Show Labels**: whether to show image labels (True/False)
+- **Label Font Size**: label font size (8-72)
+- **Label Color**: label text color (White, Black, Yellow, Cyan, Magenta, Red, Green, Blue)
+- **Label Background**: label background color (Black, White, Gray, Red, Green, Blue, Transparent)
+- **LoRA Names** (optional): input LoRA names, one per line, in the same order as the images. Leave empty to show "Image 1", "Image 2", etc.
+
+#### Text Label Feature
+
+**New in v0.1.1**: Add text labels at the bottom of images to easily identify which LoRA each image corresponds to.
+
+**How to use:**
+1. Enter LoRA names in the `LoRA Names` input box, one per line
+2. Make sure the order matches the generated images
+3. Set `Show Labels` to "True"
+4. Adjust font size, color, and background for the best visual effect
+
+**Example:**
+```
+lora_style1
+lora_style2
+lora_expression
+```
+
+The generated images will show the corresponding LoRA names at the bottom — no more guessing which image came from which LoRA!
 
 ## License
 
