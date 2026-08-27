@@ -9,7 +9,7 @@ Anima（Cosmos 系列）模型的批量 LoRA 对比插件。
 | **Anima Model Loader** | UNET + CLIP + VAE 一体化加载器 |
 | **Anima LoRA List** | 下拉选择 LoRA，统一强度，最多 20 个。支持 Apply Mode（Standard / Anima 3.8B Bridge） |
 | **Anima XY Sampler** | 遍历 LoRA 列表，每个 LoRA 生成一张图 |
-| **Anima Image Grid** | 多图拼接，水平/垂直，可调间距和颜色 |
+|| **Anima Image Grid** | 多图拼接，水平/垂直，可调间距和颜色。**新增：支持图片文字标注** |
 
 ## 安装
 
@@ -54,6 +54,30 @@ git clone https://github.com/yunqiankuangyu/comfyui-anima-lora-comparison.git
 - **Direction**：水平 / 垂直
 - **Gap**：0-256 像素
 - **Color**：Black, White, Gray, Red, Green, Blue
+- **Show Labels**：是否显示图片标签（True/False）
+- **Label Font Size**：标签字体大小（8-72）
+- **Label Color**：标签文字颜色（White, Black, Yellow, Cyan, Magenta, Red, Green, Blue）
+- **Label Background**：标签背景颜色（Black, White, Gray, Red, Green, Blue, Transparent）
+- **LoRA Names**（可选）：输入 LoRA 名称，每行一个，与图片顺序对应。留空则显示 "Image 1", "Image 2" 等
+
+#### 文字标注功能
+
+**v0.1.1 新增功能**：在图片底部添加文字标签，轻松识别每张图对应的 LoRA。
+
+**使用方法：**
+1. 在 `LoRA Names` 输入框中输入 LoRA 名称，每行一个
+2. 确保名称顺序与生成的图片顺序一致
+3. 开启 `Show Labels` 为 "True"
+4. 调整字体大小、颜色和背景以获得最佳视觉效果
+
+**示例：**
+```
+lora_style1
+lora_style2  
+lora_expression
+```
+
+这样生成的图片底部会显示对应的 LoRA 名称，再也不用分不清哪张图是哪个 LoRA 做的了！
 
 ## 开源协议
 
