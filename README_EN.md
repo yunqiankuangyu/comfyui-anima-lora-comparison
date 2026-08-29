@@ -63,6 +63,24 @@ This plugin supports integration with [ComfyUI-Anima-3.8B-LoRA-Bridge](https://g
 2. Load the target model in Anima Model Loader
 3. Select "Anima 3.8B Bridge" in the Apply Mode dropdown
 
+### Anima-2.9B Support
+
+This plugin also supports Anima-2.9B (the 40-block depth-expanded model). Depending on which model your LoRA was trained on, there are two cases:
+
+**Case 1: LoRA trained on Anima-2.9B (native 40-block LoRA)**
+- Load the 2.9B model in Anima Model Loader
+- Set Apply Mode to **Standard**
+- No extra plugins needed; just generate normally
+
+**Case 2: LoRA trained on Anima-Base v1.0 / v1.1 (28-block LoRA), but generating on the 2.9B model**
+- Keep Apply Mode at **Standard**
+- You must ALSO install both of the following load-time patches (both required, neither alone is enough). They remap the 28-block LoRA weights onto the 2.9B 40-block layout:
+  1. [ComfyUI-Anima-2.9B-blocksPatch](https://github.com/sparklingcoffee777/ComfyUI-Anima-2.9B-blocksPatch) — makes ComfyUI correctly recognize the 2.9B 40-block architecture (otherwise the model loads truncated as 28 blocks)
+  2. [ComfyUI-Anima-2.9B-loraPatch](https://github.com/sparklingcoffee777/ComfyUI-Anima-2.9B-loraPatch) — remaps the 28-block LoRA layer indices to their 2.9B positions
+- These patches are ComfyUI load-time monkey-patches that add no canvas nodes, so at the node level you still use Standard; the cross-block remapping is handled underneath by them
+
+> Note: Case 1 uses a native 2.9B LoRA whose architecture matches the model, so Standard suffices. The two patches in Case 2 apply only to the "old LoRA + 2.9B model" combo and are unrelated to Case 1.
+
 ### Anima XY Sampler
 
 - `MODEL` / `Positive` / `Negative` / `Latent` / `VAE`: wired from upstream nodes

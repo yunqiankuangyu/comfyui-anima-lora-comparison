@@ -63,6 +63,24 @@ git clone https://github.com/yunqiankuangyu/comfyui-anima-lora-comparison.git
 2. 在 Anima Model Loader 中加载目标模型
 3. 在 Apply Mode 下拉菜单中选择 "Anima 3.8B Bridge"
 
+### Anima-2.9B 支持
+
+本插件同样支持 Anima-2.9B（40-block 深度扩展模型）。根据所使用 LoRA 的训练来源，分两种情况：
+
+**情况一：LoRA 在 Anima-2.9B 上训练（原生 40-block LoRA）**
+- 在 Anima Model Loader 中加载 2.9B 模型
+- Apply Mode 选择 **Standard**
+- 无需安装任何额外插件，正常生成即可
+
+**情况二：LoRA 在 Anima-Base v1.0 / v1.1 上训练（28-block LoRA），但在 2.9B 模型上出图**
+- Apply Mode 仍选择 **Standard**
+- 同时必须安装以下两个加载期补丁（**两个都要**，缺一不可），它们会把 28-block LoRA 的权重正确重映射到 2.9B 的 40-block 布局：
+  1. [ComfyUI-Anima-2.9B-blocksPatch](https://github.com/sparklingcoffee777/ComfyUI-Anima-2.9B-blocksPatch) — 让 ComfyUI 正确识别 2.9B 的 40-block 架构（否则模型会被截断为 28 block 加载）
+  2. [ComfyUI-Anima-2.9B-loraPatch](https://github.com/sparklingcoffee777/ComfyUI-Anima-2.9B-loraPatch) — 把 28-block LoRA 的层索引重映射到 2.9B 的对应位置
+- 这两个补丁是 ComfyUI 加载期的 monkey-patch，不向画布添加节点，因此本插件节点层面仍用 Standard，跨 block 的重映射由它们底层处理
+
+> 注意：情况一用的是 2.9B 原生 LoRA，架构与模型一致，走 Standard 即可；情况二的两个补丁仅用于「旧版 LoRA + 2.9B 模型」组合，与情况一无关。
+
 ### Anima XY Sampler 节点
 
 - `MODEL` / `Positive` / `Negative` / `Latent` / `VAE`：来自上游节点的连接
