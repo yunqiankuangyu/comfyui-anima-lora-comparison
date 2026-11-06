@@ -3,7 +3,7 @@ LICENSE
 README.md
 __init__.py
 image.png
-js/anima_lora_xy.js
+js/anima_lora_xy_v2.js
 locales/zh/nodeDefs.json
 nodes.py
 project.txt

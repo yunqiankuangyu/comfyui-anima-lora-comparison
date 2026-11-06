@@ -3,6 +3,22 @@ import { app } from "../../scripts/app.js";
 const MAX_SLOTS = 20;
 let _loraCache = null;
 
+// Derive the authoritative LoRA count from saved selections so we are immune to
+// ComfyUI version differences in how widgets_values / widgets_values_named are
+// restored. When a base widget (e.g. Strength) is serialize=false the positional
+// array shrinks and "LoRA Count" can receive the lora_data JSON object -> NaN ->
+// zero dynamic slots. Reading the count from the (name-keyed, shift-proof)
+// selections avoids that entirely.
+function _animaCountFromSelections(sel) {
+    sel = sel || {};
+    var max = 0;
+    for (var k in sel) {
+        var m = /^lora_(\d+)$/.exec(k);
+        if (m) max = Math.max(max, parseInt(m[1], 10));
+    }
+    return Math.min(Math.max(max || 2, 1), MAX_SLOTS);
+}
+
 // ── Chinese input/widget/output labels (self-contained, no external translator) ──
 const ANIMA_ZH = {
   AnimaModelLoader: {
@@ -267,9 +283,15 @@ app.registerExtension({
         // ---- sync: read all combos → write lora_data + properties ----
         nodeType.prototype._animaSync = function () {
             var countW = this.widgets?.find((w) => w.name === "LoRA Count");
-            var count = countW
-                ? Math.min(Math.max(countW.value, 1), MAX_SLOTS)
-                : 1;
+            var _sel = this.properties?.anima_selections || {};
+            var _derived = _animaCountFromSelections(_sel);
+            var count;
+            if (countW && Number.isInteger(countW.value) && countW.value >= 1) {
+                count = Math.min(Math.max(countW.value, 1), MAX_SLOTS);
+            } else {
+                count = _derived;
+                if (countW) countW.value = count;
+            }
 
             var sels = {};
             for (var i = 1; i <= count; i++) {
@@ -350,9 +372,18 @@ app.registerExtension({
 
             var comboList = ["(none)", ...(_loraCache || [])];
             var countW = this.widgets?.find((w) => w.name === "LoRA Count");
-            var count = countW
-                ? Math.min(Math.max(countW.value, 1), MAX_SLOTS)
-                : 2;
+            // Self-heal the count: ComfyUI 0.43+ can mis-restore "LoRA Count" with
+            // the lora_data object (positional/named shift). Derive from saved
+            // selections and overwrite the possibly-poisoned widget value.
+            var _sel = this.properties?.anima_selections || {};
+            var _derived = _animaCountFromSelections(_sel);
+            var count;
+            if (countW && Number.isInteger(countW.value) && countW.value >= 1) {
+                count = Math.min(Math.max(countW.value, 1), MAX_SLOTS);
+            } else {
+                count = _derived;
+                if (countW) countW.value = count;
+            }
 
             var saved = this.properties?.anima_selections || {};
             var ordered = [];

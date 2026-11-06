@@ -170,7 +170,13 @@ class AnimaLoraList:
                     return kwargs[n]
             return default
 
-        LoRA_Count = int(_get("LoRA Count", "LoRA_Count", default=2) or 2)
+        _raw_count = _get("LoRA Count", "LoRA_Count", default=2)
+        try:
+            LoRA_Count = int(_raw_count)
+        except (TypeError, ValueError):
+            LoRA_Count = 2
+        if LoRA_Count < 1:
+            LoRA_Count = 2
         lora_data = _get("lora_data", default="") or ""
         Strength = _get("Strength", "strength")
         Apply_Mode = _get("Apply Mode", "Apply_Mode") or "Standard"
