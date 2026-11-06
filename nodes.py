@@ -10,6 +10,8 @@ Nodes:
 
 import json
 import os
+import re
+import struct
 import sys
 import glob
 import torch
@@ -305,6 +307,29 @@ class AnimaXYSampler:
                     lora_names.append(it[0])
         LoRA_List = clean_list
 
+        # ── Auto Apply Mode (v0.1.4) ──
+        # If the loaded MODEL is 3.8B-class (52 blocks) while any selected LoRA is NOT
+        # 3.8B-class, automatically engage "Anima 3.8B Bridge" so the user no longer has
+        # to flip the dropdown manually. (2.9B + 28-block LoRAs are already auto-handled
+        # by the external blocksPatch/loraPatch plugins in Standard mode — left alone.)
+        try:
+            _model_blocks = MODEL.model.model_config.unet_config.get("num_blocks")
+        except Exception:
+            _model_blocks = None
+        if _model_blocks == 52 and Apply_Mode != "Anima 3.8B Bridge":
+            _mismatch = False
+            for _ln in lora_names:
+                _lb = detect_lora_blocks(_ln)
+                if _lb is not None and _lb != 52:
+                    _mismatch = True
+                    break
+            if _mismatch:
+                print(
+                    "[AnimaXY] 模型为 3.8B(52-block)，检测到 LoRA 与模型非同层，"
+                    "已自动将 Apply Mode 切换为 Anima 3.8B Bridge 并联动 Bridge 插件。"
+                )
+                Apply_Mode = "Anima 3.8B Bridge"
+
         bridge_remap = None
         if Apply_Mode == "Anima 3.8B Bridge":
             block_count = MODEL.model.model_config.unet_config.get("num_blocks")
@@ -326,8 +351,15 @@ class AnimaXYSampler:
                     )
                     from mapping import remap_lora
                     bridge_remap = remap_lora
+                except ImportError:
+                    raise RuntimeError(
+                        "Anima 3.8B Bridge 模式需要安装插件 ComfyUI-Anima-3.8B-LoRA-Bridge"
+                        "（https://github.com/Lakeside529/ComfyUI-Anima-3.8B-LoRA-Bridge）。"
+                        "当前为 3.8B 模型且 LoRA 非 3.8B 层，本插件已自动切换至 Bridge 模式，"
+                        "请先安装该插件后再运行。"
+                    )
                 finally:
-                    if sys.path[0].endswith("comfyui-anima-3-8b-lora-bridge"):
+                    if sys.path and sys.path[0].endswith("comfyui-anima-3-8b-lora-bridge"):
                         sys.path.pop(0)
 
         latent = Latent.copy()
@@ -439,6 +471,47 @@ def _strip_model_ext(name):
                 changed = True
                 break
     return name
+
+
+_LORA_BLOCK_CACHE = {}
+
+
+def detect_lora_blocks(lora_name):
+    """Detect an Anima LoRA's block depth class (28 / 40 / 52) by reading ONLY the
+    safetensors header (no weight load). Returns None when unknown / non-safetensors.
+    Result is cached by (path, mtime)."""
+    try:
+        path = folder_paths.get_full_path("loras", lora_name)
+        if not path or not os.path.isfile(path):
+            return None
+        if not path.lower().endswith(".safetensors"):
+            return None
+        key = (path, os.path.getmtime(path))
+        if key in _LORA_BLOCK_CACHE:
+            return _LORA_BLOCK_CACHE[key]
+        with open(path, "rb") as f:
+            n = struct.unpack("<Q", f.read(8))[0]
+            header = json.loads(f.read(n))
+        max_idx = -1
+        for k in header.keys():
+            if k == "__metadata__":
+                continue
+            for m in re.finditer(r"blocks?[._](\d+)", k):
+                max_idx = max(max_idx, int(m.group(1)))
+            for m in re.finditer(r"(?:double|single)_blocks?[._](\d+)", k):
+                max_idx = max(max_idx, int(m.group(2)))
+        if max_idx < 0:
+            cls = None
+        elif max_idx <= 30:
+            cls = 28
+        elif max_idx <= 45:
+            cls = 40
+        else:
+            cls = 52
+        _LORA_BLOCK_CACHE[key] = cls
+        return cls
+    except Exception:
+        return None
 
 
 def _pil_to_tensor(image_pil):

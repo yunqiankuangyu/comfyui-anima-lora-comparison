@@ -2,7 +2,7 @@
 
 Batch LoRA comparison plugin for Anima (Cosmos-based) models in ComfyUI.
 
-> Current version: **v0.1.3**
+> Current version: **v0.1.4**
 
 ## Nodes
 

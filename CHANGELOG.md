@@ -3,6 +3,19 @@
 本文件记录 `comfyui-anima-lora-comparison` 的所有重要变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/)，版本号遵循语义化版本。
 
+## [0.1.4] - 2026-11-06
+
+### 新增
+- **Apply Mode 自动切换（3.8B 场景）**：当加载的模型为 3.8B（52-block）且所选 LoRA 非 3.8B 层（如 Base/1.0 的 28-block LoRA、2.9B 的 40-block LoRA）时，自动将 Apply Mode 从 Standard 切换为 Anima 3.8B Bridge 并联动 Bridge 插件，用户不再需要手动在列表末行切换。
+- 新增 `detect_lora_blocks()`：仅读取 safetensors 头部（不加载权重）识别 LoRA 的 block 层数（28/40/52），结果按 路径+mtime 缓存。
+
+### 修复
+- Bridge 插件缺失时给出明确报错，并附带 ComfyUI-Anima-3.8B-LoRA-Bridge 安装链接（不再抛出裸 `ImportError`）。
+
+### 说明
+- 2.9B（40-block）与 28-block LoRA 的组合仍由外部 blocksPatch / loraPatch 插件在 Standard 模式下自动处理，本版本不做改动。
+- 版本号提升至 `0.1.4`。
+
 ## [0.1.3] - 2026-11-06
 
 ### 修复
