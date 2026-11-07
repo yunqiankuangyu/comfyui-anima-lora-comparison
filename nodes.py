@@ -331,6 +331,7 @@ class AnimaXYSampler:
                 Apply_Mode = "Anima 3.8B Bridge"
 
         bridge_remap = None
+        bridge_detect = None
         if Apply_Mode == "Anima 3.8B Bridge":
             block_count = MODEL.model.model_config.unet_config.get("num_blocks")
             if block_count != 52:
@@ -338,8 +339,12 @@ class AnimaXYSampler:
                     f"Anima 3.8B Bridge requires a 52-block (3.8B) MODEL, got {block_count!r}"
                 )
             try:
-                from comfyui_anima_3_8b_lora_bridge.mapping import remap_lora
+                from comfyui_anima_3_8b_lora_bridge.mapping import (
+                    remap_lora,
+                    detect_source_block_count,
+                )
                 bridge_remap = remap_lora
+                bridge_detect = detect_source_block_count
             except ImportError:
                 try:
                     sys.path.insert(
@@ -349,8 +354,12 @@ class AnimaXYSampler:
                             "comfyui-anima-3-8b-lora-bridge",
                         ),
                     )
-                    from mapping import remap_lora
+                    from mapping import (
+                        remap_lora,
+                        detect_source_block_count,
+                    )
                     bridge_remap = remap_lora
+                    bridge_detect = detect_source_block_count
                 except ImportError:
                     raise RuntimeError(
                         "Anima 3.8B Bridge 模式需要安装插件 ComfyUI-Anima-3.8B-LoRA-Bridge"
@@ -389,8 +398,25 @@ class AnimaXYSampler:
                 if lora_path is None:
                     raise FileNotFoundError(f"LoRA not found: {lora_name}")
                 lora_sd = comfy.utils.load_torch_file(lora_path)
-                if bridge_remap is not None:
-                    lora_sd, _, _, _ = bridge_remap(lora_sd)
+                # Per-LoRA Bridge decision (v0.1.5 fix): only remap real Anima DiT
+                # LoRAs that are NOT 3.8B-native. Feeding an unsupported file
+                # (SDXL, SD1.5, Cosmos, ...) into bridge_remap crashes with
+                # "no supported Anima DiT block keys". Detect first and fail with a
+                # clear, file-named message instead of a raw stack trace.
+                if bridge_remap is not None and bridge_detect is not None:
+                    try:
+                        _src_blocks = bridge_detect(lora_sd)
+                    except ValueError as e:
+                        raise RuntimeError(
+                            f"LoRA「{lora_name}」无法用 Anima 3.8B Bridge 加载：{e}。\n"
+                            f"该文件不是受支持的 Anima DiT LoRA（Base/2.9B/3.8B），"
+                            f"可能是 SDXL、SD1.5 或其他架构的 LoRA。\n"
+                            f"请从对比列表中移除它，或改用对应架构的模型。"
+                        )
+                    if _src_blocks != 52:
+                        # 28/40-block Anima LoRA → remap into the 52-block 3.8B layout
+                        lora_sd, _, _, _ = bridge_remap(lora_sd)
+                    # _src_blocks == 52 → native 3.8B LoRA, load directly (no remap)
                 model_lora, _ = comfy.sd.load_lora_for_models(
                     MODEL, None, lora_sd, strength, 0
                 )

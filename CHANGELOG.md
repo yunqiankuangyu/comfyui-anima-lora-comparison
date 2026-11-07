@@ -3,6 +3,12 @@
 本文件记录 `comfyui-anima-lora-comparison` 的所有重要变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/)，版本号遵循语义化版本。
 
+## [0.1.5] - 2026-11-07
+
+### 修复
+- **修复「3.8B 自动 Bridge」误把非 Anima LoRA 送入 Bridge 导致整批崩溃**：v0.1.4 的自动切换为全局生效，一旦列表中任一 LoRA 非 3.8B 层便对整个列表统一调用 `bridge_remap`，若列表中混入 SDXL / SD1.5 等非 Anima DiT LoRA（其权重 key 前缀不被 Bridge 识别），会抛出 `The selected file has no supported Anima DiT block keys` 并使整个节点失败。
+- 改为**逐 LoRA 决策**：在采样循环中对每个 LoRA 先用 Bridge 自身的 `detect_source_block_count` 判定——Anima 28/40-block 才走重映射，3.8B 原生(52) 直接加载，完全非 Anima DiT 的文件则抛出**带文件名的清晰报错**（指明可能是 SDXL 等其它架构、建议从列表移除），不再出现难以定位的裸堆栈。
+
 ## [0.1.4] - 2026-11-06
 
 ### 新增
